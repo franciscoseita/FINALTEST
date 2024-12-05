@@ -26,7 +26,11 @@ public class CRUDSeleniumTest {
   @BeforeEach
   public void setUp() throws Exception {
     WebDriverManager.chromedriver().setup();
-    driver = new ChromeDriver();
+    
+    ChromeOptions options = new ChromeOptions();
+    options.addArguments("--headless", "--disable-gpu", "--window-size=1920,1080", "--no-sandbox");
+    driver = new ChromeDriver(options);
+    
     baseUrl = "https://mern-crud-mpfr.onrender.com/";
     driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(60));
     js = (JavascriptExecutor) driver;
