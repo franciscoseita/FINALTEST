@@ -61,6 +61,35 @@ jobs:
           name: Notify
           command: echo "Integration Tests completed successfully."
 
+  run-selenium-tests:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - run:
+          name: Installing browser
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget gnupg
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get install -y google-chrome-stable
+      - run:
+          name: Installing ChromeDriver
+          command: |
+            sudo apt-get install -y unzip
+            wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+            unzip chromedriver_linux64.zip
+            sudo mv chromedriver /usr/local/bin/
+            sudo chmod +x /usr/local/bin/chromedriver
+      - run:
+          name: Run CRUD Selenium Tests
+          command: mvn test -Dtest=com.mayab.quality.functional.CRUDSeleniumTest -e -X
+      - run:
+          name: Notify
+          command: echo "Selenium Tests completed successfully."
+
 # Orchestrate jobs using workflows
 workflows:
   version: 2
@@ -68,3 +97,5 @@ workflows:
     jobs:
       - run-unit-tests
       - run-integration-test
+      - run-selenium-tests
+
