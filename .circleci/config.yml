@@ -1,9 +1,7 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
+# Define jobs to be invoked later in a workflow.
 jobs:
   run-unit-tests:
     docker:
@@ -19,26 +17,26 @@ jobs:
       - run:
           name: Notify
           command: echo "Unit Tests completed successfully."
-    run-integration-test:
-      docker:
-        - image: cimg/openjdk:17.0
-        - image: mysql:8.0
-          environment:
-            MYSQL_ROOT_PASSWORD: 123456
-            MYSQL_DATABASE: dbunit
-      steps:
-        - checkout
-        - run: 
+
+  run-integration-test:
+    docker:
+      - image: cimg/openjdk:17.0
+      - image: mysql:8.0
+        environment:
+          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_DATABASE: dbunit
+    steps:
+      - checkout
+      - run:
           name: Waiting for MySQL to be ready
           command: |
-            for i in seq 1 10;
+            for i in $(seq 1 10);
             do
               nc -z 127.0.0.1 3306 && echo Success && exit 0
               echo -n .
               sleep 1
             done
             echo Failed waiting for MySQL && exit 1
-
       - run:
           name: Install MySQL and import schema
           command: |
@@ -62,12 +60,8 @@ jobs:
       - run:
           name: Notify
           command: echo "Integration Tests completed successfully."
-         
-
-    
 
 # Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
 workflows:
   version: 2
   test-workflow:
