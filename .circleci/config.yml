@@ -19,6 +19,52 @@ jobs:
       - run:
           name: Notify
           command: echo "Unit Tests completed successfully."
+    run-integration-test:
+      docker:
+        - image: cimg/openjdk:17.0
+        - image: mysql:8.0
+          environment:
+            MYSQL_ROOT_PASSWORD: 123456
+            MYSQL_DATABASE: dbunit
+      steps:
+        - checkout
+        - run: 
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in seq 1 10;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+
+      - run:
+          name: Install MySQL and import schema
+          command: |
+            sudo apt update && sudo apt install default-mysql-client
+            echo "SOURCE src/test/resources/schema.sql;" | mysql -h 127.0.0.1 -uroot -p123456 dbunit
+            echo "Checking tables in dbunit..."
+            mysql -h 127.0.0.1 -uroot -p123456 dbunit -e "SHOW TABLES;"
+            echo "SELECT * FROM usuarios;" | mysql -h 127.0.0.1 -uroot -p123456 dbunit
+            echo "done"
+      - run:
+          name: Verify MySQL is Ready for Tests
+          command: |
+            mysql -h 127.0.0.1 -P 3306 -u root -p123456 -e "SELECT 1;"
+      - run:
+          name: Verify Tables in Database
+          command: |
+            mysql -h 127.0.0.1 -P 3306 -u root -p123456 -e "SHOW TABLES;" dbunit
+      - run:
+          name: Run Integration Test
+          command: mvn test -Dtest=com.mayab.quality.integration.UserSeviceTest -e -X
+      - run:
+          name: Notify
+          command: echo "Integration Tests completed successfully."
+         
+
+    
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
@@ -27,3 +73,4 @@ workflows:
   test-workflow:
     jobs:
       - run-unit-tests
+      - run-integration-test
